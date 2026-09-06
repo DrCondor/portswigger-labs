@@ -49,6 +49,8 @@ Sedno całej klasy: **rozbieżność między tym, jak URL interpretuje origin se
 - **01 — path mapping**: origin mapuje po prefiksie i ignoruje sufiks (`/my-account/wcd.js`).
 - **02 — path delimiters**: origin ucina ścieżkę na znaku-delimiterze (`/my-account;wcd.js`, np. `;` w Spring); szukanie delimitera Burp Intruderem.
 - **03 — origin server normalization**: origin normalizuje traversal, cache nie → `/resources/..%2fmy-account` (encoded slash `%2f`, static directory rule na `/resources`).
-- **Następne w temacie:** *cache server normalization* — lustro labu 03 (cache normalizuje, origin nie).
+- **04 — cache server normalization**: cache normalizuje, origin nie + delimiter → `/my-account%23%2f..%2fresources%2fwcd` (`#` jako delimiter wysyłany jako `%23`). Dużo debugowania *dostarczenia* (Store, timing, składnia exploita).
+
+Temat **Web cache deception domknięty** (labki 01–04).
 
 Powtarzalny schemat ataku: **znajdź rozbieżność → dostarcz link ofierze (exploit server) → czytaj dane z cache** (`X-Cache: miss/hit`).
