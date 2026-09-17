@@ -54,3 +54,11 @@ Sedno całej klasy: **rozbieżność między tym, jak URL interpretuje origin se
 Temat **Web cache deception domknięty** (labki 01–04).
 
 Powtarzalny schemat ataku: **znajdź rozbieżność → dostarcz link ofierze (exploit server) → czytaj dane z cache** (`X-Cache: miss/hit`).
+
+### `web-llm-attacks/` — Web LLM attacks
+Aplikacja podpina LLM-a do backendu i daje mu dostęp do **funkcji/narzędzi** (function calling). LLM to most między tekstem użytkownika a realnymi funkcjami backendu. Podatność: model ma dostęp do groźnej funkcji **i** da się go namówić na jej wywołanie.
+
+- **01 — excessive agency**: chatbot ma podpięty `debug_sql` (surowy SQL) → `DELETE FROM users WHERE username='carlos'`. Metoda: enumeruj funkcje (pytaj model wprost) → znajdź groźną → podawaj DOKŁADNY SQL (nie każ improwizować).
+- **Następne w topicu:** indirect prompt injection.
+
+Powtarzalny schemat: **enumerate funkcje → zidentyfikuj groźną → wywołaj z precyzyjnym payloadem.**
