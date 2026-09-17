@@ -62,3 +62,11 @@ Aplikacja podpina LLM-a do backendu i daje mu dostęp do **funkcji/narzędzi** (
 - **Następne w topicu:** indirect prompt injection.
 
 Powtarzalny schemat: **enumerate funkcje → zidentyfikuj groźną → wywołaj z precyzyjnym payloadem.**
+
+### `path-traversal/` — Path traversal (część „Server-side vulnerabilities")
+Aplikacja czyta plik po nazwie z inputu (`read(baza + filename)`). Wsadzasz `../`, wychodzisz poza katalog bazowy i czytasz dowolny plik. **Prymityw READ, nie execute** — nie ma `ls`/komend (to OS command injection). Ta sama mechanika `..` co w normalizacji cache deception.
+
+- **01 — simple case**: `GET /image?filename=../../../../../etc/passwd` (brak zabezpieczeń, goły `../`).
+- **Następne:** obejścia filtrów (absolutna ścieżka, `....//`, URL-encode `%2e%2e%2f` / podwójny, wymuszony prefiks, null byte `%00`, wymuszone rozszerzenie).
+
+> **Uwaga:** przeszliśmy z Web LLM attacks (⏸ pauza po labce 01) na foundacyjną ścieżkę **Server-side vulnerabilities**, bo dalsze labki LLM opierają się na klasycznych podatnościach (command injection, XSS…). Kolejność: fundamenty server-side → client-side → powrót do LLM.
