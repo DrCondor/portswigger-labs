@@ -74,6 +74,8 @@ Trzecia warstwa po authentication („kim jesteś") i session („czy to nadal t
 
 - **01 — unprotected admin functionality**: panel admina bez żadnego checka uprawnień; ścieżka (losowa) wyczytana z `robots.txt` → wejście na `/administrator-panel` → `Delete` carlosa (GET). Sedno: `robots.txt` to mapa skarbów, nie ochrona (security through obscurity); **strona ≠ akcja** (każdy endpoint musi mieć własny check).
 
-Powtarzalny schemat: **znajdź wrażliwą funkcję → sprawdź czy endpoint realnie weryfikuje uprawnienia → wywołaj bezpośrednio (URL/parametr)**.
+- **02 — unprotected admin functionality with unpredictable URL**: `robots.txt` = "Not Found", ale ścieżka panelu (`/admin-s92mfl`) wyciekła w **JS strony głównej** (`if(isAdmin){ href=... }` — link nie renderuje się w DOM, ale kod leci do każdego). Sedno: **client-side access control ≠ ochrona**; ukryty link/przycisk to kosmetyka, nie bariera. + information disclosure.
+
+Powtarzalny schemat: **enumeracja ścieżki (robots.txt → źródło/JS → API…) → wywołaj endpoint bezpośrednio → brak/wadliwy check = broken access control**. Kolejne laby: parameter-based, method-based, IDOR.
 
 > **Uwaga:** przeszliśmy z Web LLM attacks (⏸ pauza po labce 01) na foundacyjną ścieżkę **Server-side vulnerabilities**, bo dalsze labki LLM opierają się na klasycznych podatnościach (command injection, XSS…). Kolejność: fundamenty server-side → client-side → powrót do LLM.
