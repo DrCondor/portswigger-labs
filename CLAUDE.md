@@ -69,4 +69,11 @@ Aplikacja czyta plik po nazwie z inputu (`read(baza + filename)`). Wsadzasz `../
 - **01 — simple case**: `GET /image?filename=../../../../../etc/passwd` (brak zabezpieczeń, goły `../`).
 - **Następne:** obejścia filtrów (absolutna ścieżka, `....//`, URL-encode `%2e%2e%2f` / podwójny, wymuszony prefiks, null byte `%00`, wymuszone rozszerzenie).
 
+### `access-control/` — Access control (część „Server-side vulnerabilities")
+Trzecia warstwa po authentication („kim jesteś") i session („czy to nadal ty"): **authorization** = „czy **wolno ci** to zrobić". Broken access control = ta warstwa zawodzi mimo poprawnego logowania. OWASP Top 10 #1.
+
+- **01 — unprotected admin functionality**: panel admina bez żadnego checka uprawnień; ścieżka (losowa) wyczytana z `robots.txt` → wejście na `/administrator-panel` → `Delete` carlosa (GET). Sedno: `robots.txt` to mapa skarbów, nie ochrona (security through obscurity); **strona ≠ akcja** (każdy endpoint musi mieć własny check).
+
+Powtarzalny schemat: **znajdź wrażliwą funkcję → sprawdź czy endpoint realnie weryfikuje uprawnienia → wywołaj bezpośrednio (URL/parametr)**.
+
 > **Uwaga:** przeszliśmy z Web LLM attacks (⏸ pauza po labce 01) na foundacyjną ścieżkę **Server-side vulnerabilities**, bo dalsze labki LLM opierają się na klasycznych podatnościach (command injection, XSS…). Kolejność: fundamenty server-side → client-side → powrót do LLM.
