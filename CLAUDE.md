@@ -76,6 +76,8 @@ Trzecia warstwa po authentication („kim jesteś") i session („czy to nadal t
 
 - **02 — unprotected admin functionality with unpredictable URL**: `robots.txt` = "Not Found", ale ścieżka panelu (`/admin-s92mfl`) wyciekła w **JS strony głównej** (`if(isAdmin){ href=... }` — link nie renderuje się w DOM, ale kod leci do każdego). Sedno: **client-side access control ≠ ochrona**; ukryty link/przycisk to kosmetyka, nie bariera. + information disclosure.
 
-Powtarzalny schemat: **enumeracja ścieżki (robots.txt → źródło/JS → API…) → wywołaj endpoint bezpośrednio → brak/wadliwy check = broken access control**. Kolejne laby: parameter-based, method-based, IDOR.
+- **03 — user role controlled by request parameter**: `/admin` sprawdza rolę po **sfałszowalnym cookie** `Admin=false`. Zmiana na `true` (DevTools) → panel. Sedno: **parameter-based access control** — rola trzymana w danych od klienta (cookie/hidden field/`?admin=true`); token `session` (losowy, nietykalny) vs flaga `Admin` (goła, edytowalna). **Vertical privilege escalation**. Zasada: rola zawsze po stronie serwera z sesji, nigdy z danych klienta.
+
+Powtarzalny schemat: **enumeracja ścieżki (robots.txt → źródło/JS → API…) → wywołaj endpoint bezpośrednio → brak/wadliwy check = broken access control**. Check może istnieć, ale opierać się na czymś, co kontrolujesz. Kolejne laby: horizontal (IDOR na `?id=`), method-based, referer-based.
 
 > **Uwaga:** przeszliśmy z Web LLM attacks (⏸ pauza po labce 01) na foundacyjną ścieżkę **Server-side vulnerabilities**, bo dalsze labki LLM opierają się na klasycznych podatnościach (command injection, XSS…). Kolejność: fundamenty server-side → client-side → powrót do LLM.
