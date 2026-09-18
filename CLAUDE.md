@@ -80,6 +80,10 @@ Trzecia warstwa po authentication („kim jesteś") i session („czy to nadal t
 
 - **04 — user ID controlled by request parameter, with unpredictable GUIDs**: pierwszy **horizontal** (dostęp do konta innego usera). `/my-account?id=<GUID>` ślepo ufa id (IDOR/BOLA). GUID nieodgadywalny, ale **wyciekł w innym module**: klik w autora bloga → `/blogs?userId=<GUID carlosa>` → podstawiasz w `?id=` → API key carlosa. Sedno: **chaining** (wyciek id + IDOR); GUID to obscurity, nie authz; prawdziwy fix = autoryzacja per-obiekt (zasób z sesji, nie z parametru).
 
-Powtarzalny schemat: **enumeracja ścieżki (robots.txt → źródło/JS → API…) → wywołaj endpoint bezpośrednio → brak/wadliwy check = broken access control**. Check/losowość id może istnieć, ale prawdziwa ochrona to authz po stronie serwera (per-obiekt). Kolejne laby: method-based, referer-based, multi-step.
+- **05 — user ID controlled by request parameter with password disclosure**: `/my-account?id=administrator` (IDOR) + hasło admina w `<input type=password value='...'>` w źródle (maskowanie ≠ ukrycie). Login jako admin → Delete carlos. Sedno: **horizontal → vertical escalation** (przejmujesz konto uprzywilejowanego usera); nigdy nie odsyłaj hasła do klienta; chaining IDOR + password disclosure + broken access control.
+
+Powtarzalny schemat: **enumeracja ścieżki (robots.txt → źródło/JS → API…) → wywołaj endpoint bezpośrednio → brak/wadliwy check = broken access control**. Check/losowość id/maskowanie może istnieć, ale prawdziwa ochrona to authz po stronie serwera (per-akcja i per-obiekt).
+
+Temat **Access control** — notatki 01–05 (Apprentice) gotowe; PortSwigger topic domknięty. Powtarzalny rdzeń: check może być w złym miejscu, opierać się na danych klienta, albo być zastąpiony fałszywą „ochroną" (obscurity/maskowanie/losowe id).
 
 > **Uwaga:** przeszliśmy z Web LLM attacks (⏸ pauza po labce 01) na foundacyjną ścieżkę **Server-side vulnerabilities**, bo dalsze labki LLM opierają się na klasycznych podatnościach (command injection, XSS…). Kolejność: fundamenty server-side → client-side → powrót do LLM.
