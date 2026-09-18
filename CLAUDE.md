@@ -78,6 +78,8 @@ Trzecia warstwa po authentication („kim jesteś") i session („czy to nadal t
 
 - **03 — user role controlled by request parameter**: `/admin` sprawdza rolę po **sfałszowalnym cookie** `Admin=false`. Zmiana na `true` (DevTools) → panel. Sedno: **parameter-based access control** — rola trzymana w danych od klienta (cookie/hidden field/`?admin=true`); token `session` (losowy, nietykalny) vs flaga `Admin` (goła, edytowalna). **Vertical privilege escalation**. Zasada: rola zawsze po stronie serwera z sesji, nigdy z danych klienta.
 
-Powtarzalny schemat: **enumeracja ścieżki (robots.txt → źródło/JS → API…) → wywołaj endpoint bezpośrednio → brak/wadliwy check = broken access control**. Check może istnieć, ale opierać się na czymś, co kontrolujesz. Kolejne laby: horizontal (IDOR na `?id=`), method-based, referer-based.
+- **04 — user ID controlled by request parameter, with unpredictable GUIDs**: pierwszy **horizontal** (dostęp do konta innego usera). `/my-account?id=<GUID>` ślepo ufa id (IDOR/BOLA). GUID nieodgadywalny, ale **wyciekł w innym module**: klik w autora bloga → `/blogs?userId=<GUID carlosa>` → podstawiasz w `?id=` → API key carlosa. Sedno: **chaining** (wyciek id + IDOR); GUID to obscurity, nie authz; prawdziwy fix = autoryzacja per-obiekt (zasób z sesji, nie z parametru).
+
+Powtarzalny schemat: **enumeracja ścieżki (robots.txt → źródło/JS → API…) → wywołaj endpoint bezpośrednio → brak/wadliwy check = broken access control**. Check/losowość id może istnieć, ale prawdziwa ochrona to authz po stronie serwera (per-obiekt). Kolejne laby: method-based, referer-based, multi-step.
 
 > **Uwaga:** przeszliśmy z Web LLM attacks (⏸ pauza po labce 01) na foundacyjną ścieżkę **Server-side vulnerabilities**, bo dalsze labki LLM opierają się na klasycznych podatnościach (command injection, XSS…). Kolejność: fundamenty server-side → client-side → powrót do LLM.
