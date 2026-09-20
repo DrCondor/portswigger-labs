@@ -91,6 +91,10 @@ Warstwa „kim jesteś" (drzwi wejściowe), którą access control zakładał ja
 
 - **01 — username enumeration via different responses**: Intruder Sniper na `username` (lista ~100) → ważny user `ak` odstawał **Length 3354 vs 3352** (bo `"Incorrect password"` dłuższe niż `"Invalid username"`) — sortuj po Length, nie tylko Status. Potem Sniper na `password` (username=ak) → `pass` dało **302** = udany login. Sedno: aplikacja jako **oracle** (zdradza ważny login) redukuje brute-force z mnożenia (100×100) do dodawania (100+100); obrona = generyczny komunikat + rate-limit/MFA. `302 przy logowaniu = sukces`.
 
-Powtarzalny schemat brute-force: **przechwyć POST /login → Intruder Sniper → sortuj wyniki (Status + Length) → znajdź odstający wiersz**. Kolejne laby: enumeracja przez timing/subtelną treść, obejścia lockoutu, błędy 2FA, luki w resecie hasła.
+- **02 — 2FA simple bypass**: 2FA rozbite na `/login` (hasło) → `/login2` (kod) → `/my-account`; po kroku 1 sesja **już** jest zalogowana. Rekon na własnym koncie (poznaj happy-path + URL konta) → login `carlos:montoya` → na ekranie `/login2` **ręcznie wejdź na `/my-account?id=carlos`**, pomijając kod. Sedno: stan „zalogowany" nadany za wcześnie; strona logged-in-only nie sprawdza „2FA completed" — **broken access control w przepływie 2FA**. Obrona: pending session, enforcement po stronie serwera.
+
+Powtarzalny schemat brute-force: **przechwyć POST /login → Intruder Sniper → sortuj wyniki (Status + Length) → znajdź odstający wiersz**. Metodyka wieloetapowa: **rekon happy-path na własnym koncie → powtórz z pominięciem bramki na koncie ofiary**.
+
+Temat **Authentication** — notatki 01–02 (Apprentice) gotowe; PortSwigger topic 10/10 domknięty. Rdzeń: każdy krok logowania to potencjalny wyciek informacji (enumeration) lub niewyegzekwowana bramka (2FA bypass, brak rate-limitu). Kolejne (poza Apprentice): enumeracja timingiem, obejścia lockoutu, luki w resecie hasła (password reset poisoning — diagram evil-user.net).
 
 > **Uwaga:** przeszliśmy z Web LLM attacks (⏸ pauza po labce 01) na foundacyjną ścieżkę **Server-side vulnerabilities**, bo dalsze labki LLM opierają się na klasycznych podatnościach (command injection, XSS…). Kolejność: fundamenty server-side → client-side → powrót do LLM.
