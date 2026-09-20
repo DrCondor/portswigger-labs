@@ -86,4 +86,11 @@ Powtarzalny schemat: **enumeracja ścieżki (robots.txt → źródło/JS → API
 
 Temat **Access control** — notatki 01–05 (Apprentice) gotowe; PortSwigger topic domknięty. Powtarzalny rdzeń: check może być w złym miejscu, opierać się na danych klienta, albo być zastąpiony fałszywą „ochroną" (obscurity/maskowanie/losowe id).
 
+### `authentication/` — Authentication vulnerabilities
+Warstwa „kim jesteś" (drzwi wejściowe), którą access control zakładał jako działającą. Trzy filary: something you know/have/are; web głównie na haśle → temat = atakowanie logowania hasłowego. Główne narzędzie: **Burp Intruder** (Community = dławiony ~1 req/s).
+
+- **01 — username enumeration via different responses**: Intruder Sniper na `username` (lista ~100) → ważny user `ak` odstawał **Length 3354 vs 3352** (bo `"Incorrect password"` dłuższe niż `"Invalid username"`) — sortuj po Length, nie tylko Status. Potem Sniper na `password` (username=ak) → `pass` dało **302** = udany login. Sedno: aplikacja jako **oracle** (zdradza ważny login) redukuje brute-force z mnożenia (100×100) do dodawania (100+100); obrona = generyczny komunikat + rate-limit/MFA. `302 przy logowaniu = sukces`.
+
+Powtarzalny schemat brute-force: **przechwyć POST /login → Intruder Sniper → sortuj wyniki (Status + Length) → znajdź odstający wiersz**. Kolejne laby: enumeracja przez timing/subtelną treść, obejścia lockoutu, błędy 2FA, luki w resecie hasła.
+
 > **Uwaga:** przeszliśmy z Web LLM attacks (⏸ pauza po labce 01) na foundacyjną ścieżkę **Server-side vulnerabilities**, bo dalsze labki LLM opierają się na klasycznych podatnościach (command injection, XSS…). Kolejność: fundamenty server-side → client-side → powrót do LLM.
