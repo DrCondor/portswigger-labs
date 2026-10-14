@@ -97,4 +97,12 @@ Powtarzalny schemat brute-force: **przechwyć POST /login → Intruder Sniper �
 
 Temat **Authentication** — notatki 01–02 (Apprentice) gotowe; PortSwigger topic 10/10 domknięty. Rdzeń: każdy krok logowania to potencjalny wyciek informacji (enumeration) lub niewyegzekwowana bramka (2FA bypass, brak rate-limitu). Kolejne (poza Apprentice): enumeracja timingiem, obejścia lockoutu, luki w resecie hasła (password reset poisoning — diagram evil-user.net).
 
+### `ssrf/` — Server-Side Request Forgery
+Odwrócenie kierunku: zamiast atakować aplikację jako klient, **zmuszasz serwer, żeby to on wysłał żądanie** tam, gdzie wskażesz (parametr z URL-em: `stockApi=`, `url=`, `webhook=`…). Serwer staje się twoim posłańcem/proxy. Sedno groźności: **zaufanie topologiczne** — systemy ufają żądaniu po *pochodzeniu* (lokalne/`127.0.0.1`), nie po *tożsamości*; SSRF to pochodzenie fałszuje, bo request fizycznie wychodzi z serwera (omija firewall, sięga loopback / sieć wewnętrzną / inne porty).
+
+- **01 — basic SSRF against local server**: `stockApi=http://localhost/admin` → serwer fetchuje panel admina „jako lokalny" i **odsyła HTML w odpowiedzi** (in-band/returned SSRF). Wyczytany link `Delete` → `stockApi=http://localhost/admin/delete?username=carlos` → 302 = skasowany. Sedno: SSRF jako wytrych do broken access control; `localhost` = serwer aplikacji, nie twój komputer.
+- **Następne:** cel w sieci wewnętrznej (inny host/port), obejścia filtrów na `localhost` (alternatywne zapisy IP, redirecty), blind SSRF (Burp Collaborator).
+
+Powtarzalny schemat: **znajdź parametr z URL-em → wskaż nim adres wewnętrzny → serwer sięga tam jako „zaufany" → czytasz odpowiedź.**
+
 > **Uwaga:** przeszliśmy z Web LLM attacks (⏸ pauza po labce 01) na foundacyjną ścieżkę **Server-side vulnerabilities**, bo dalsze labki LLM opierają się na klasycznych podatnościach (command injection, XSS…). Kolejność: fundamenty server-side → client-side → powrót do LLM.
