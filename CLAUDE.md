@@ -101,7 +101,8 @@ Temat **Authentication** — notatki 01–02 (Apprentice) gotowe; PortSwigger to
 Odwrócenie kierunku: zamiast atakować aplikację jako klient, **zmuszasz serwer, żeby to on wysłał żądanie** tam, gdzie wskażesz (parametr z URL-em: `stockApi=`, `url=`, `webhook=`…). Serwer staje się twoim posłańcem/proxy. Sedno groźności: **zaufanie topologiczne** — systemy ufają żądaniu po *pochodzeniu* (lokalne/`127.0.0.1`), nie po *tożsamości*; SSRF to pochodzenie fałszuje, bo request fizycznie wychodzi z serwera (omija firewall, sięga loopback / sieć wewnętrzną / inne porty).
 
 - **01 — basic SSRF against local server**: `stockApi=http://localhost/admin` → serwer fetchuje panel admina „jako lokalny" i **odsyła HTML w odpowiedzi** (in-band/returned SSRF). Wyczytany link `Delete` → `stockApi=http://localhost/admin/delete?username=carlos` → 302 = skasowany. Sedno: SSRF jako wytrych do broken access control; `localhost` = serwer aplikacji, nie twój komputer.
-- **Następne:** cel w sieci wewnętrznej (inny host/port), obejścia filtrów na `localhost` (alternatywne zapisy IP, redirecty), blind SSRF (Burp Collaborator).
+- **02 — basic SSRF against another back-end system**: cel nie na `localhost`, tylko gdzieś w `192.168.0.0/24:8080` — nie znasz adresu. **SSRF jako skaner sieci**: Intruder Sniper na ostatnim oktecie (Numbers 1–255), sortuj po Status/Length → sierota (payload 62: 200/3376 vs martwe 500/2581) = `192.168.0.62:8080`. Potem `/admin/delete?username=carlos` → 302. Sedno: back-end „chroniony topologią" = słaby security posture; ta sama „szukaj odstającego wiersza" mechanika co username enumeration.
+- **Następne:** obejścia filtrów na `localhost` (alternatywne zapisy IP, redirecty), blind SSRF (Burp Collaborator).
 
 Powtarzalny schemat: **znajdź parametr z URL-em → wskaż nim adres wewnętrzny → serwer sięga tam jako „zaufany" → czytasz odpowiedź.**
 
