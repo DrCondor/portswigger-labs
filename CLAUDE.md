@@ -106,4 +106,12 @@ Odwrócenie kierunku: zamiast atakować aplikację jako klient, **zmuszasz serwe
 
 Powtarzalny schemat: **znajdź parametr z URL-em → wskaż nim adres wewnętrzny → serwer sięga tam jako „zaufany" → czytasz odpowiedź.**
 
+### `file-upload/` — File upload vulnerabilities
+Serwer przyjmuje i zapisuje plik **bez wystarczającej walidacji** (nazwa/typ/zawartość/rozmiar). Najgorszy wariant: wgrywasz **plik ze skryptem server-side** (PHP/JSP…), a serwer jest skonfigurowany, żeby go **wykonać** → upload „obrazka" staje się **RCE**. Klucz mechanizmu: nie plik, lecz **konfiguracja serwera** („każdy `.php` w katalogu webowym → przepuść przez interpreter"); to samo dałoby się w Ruby/Perl/ASP przy modelu CGI, ale Rails standardowo serwuje `public/` statycznie, więc `.rb` leży martwy. Katalog `exploits/` trzyma wgrywane pliki (web shelle).
+
+- **01 — RCE via web shell upload**: upload avatara bez żadnej walidacji → wgrany `shell.php` z `<?php echo file_get_contents('/home/carlos/secret'); ?>` → `GET /files/avatars/shell.php` → serwer wykonuje PHP, w odpowiedzi sekret (200, Content-Type text/html, Content-Length = długość sekretu nie kodu = dowód wykonania). Pułapka: ścieżka absolutna `/home/...` vs względna; katalog avatara odkryć z `src`/Proxy history, nie zgadywać.
+- **Następne:** obejścia walidacji — Content-Type w Burpie, blacklisty rozszerzeń (`.phtml`/`.php5`), `.htaccess`, polygloty (PHP w metadanych obrazka), null byte, path traversal w nazwie.
+
+Powtarzalny schemat: **wgraj wykonywalny plik → znajdź URL, pod którym jest serwowany → poproś o niego → serwer odpala kod → czytasz wynik.**
+
 > **Uwaga:** przeszliśmy z Web LLM attacks (⏸ pauza po labce 01) na foundacyjną ścieżkę **Server-side vulnerabilities**, bo dalsze labki LLM opierają się na klasycznych podatnościach (command injection, XSS…). Kolejność: fundamenty server-side → client-side → powrót do LLM.
