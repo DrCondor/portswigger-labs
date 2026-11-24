@@ -132,4 +132,18 @@ Aplikacja buduje string zapytania SQL **sklejając input użytkownika jako tekst
 
 Powtarzalny schemat: **zamknij string (`'`) → dopisz swój SQL → wykomentuj resztę (`--`)**. Test na obecność: wstrzyknij samo `'` i szukaj błędu/anomalii.
 
-> **Uwaga:** przeszliśmy z Web LLM attacks (⏸ pauza po labce 01) na foundacyjną ścieżkę **Server-side vulnerabilities**, bo dalsze labki LLM opierają się na klasycznych podatnościach (command injection, XSS…). Kolejność: fundamenty server-side → client-side → powrót do LLM. File upload w toku (01–02 z 9), temat na razie zostawiony na rzecz OS command injection (następny w pasku PortSwiggera).
+## Status nauki i plan (aktualizowany)
+
+**Ścieżka „Server-side vulnerabilities" — ✅ 52/52 ukończona (24 Nov 2026).** Kolejność całości: fundamenty server-side → **client-side** → powrót do **LLM**.
+
+Stan paczek:
+- ✅ Web cache deception (osobny path, zrobiony wcześniej)
+- ✅ Server-side vulnerabilities (path traversal, access control, auth, SSRF, file upload, OS command injection, SQLi apprentice)
+- ⏸ Web LLM attacks — 8/30, **świadoma pauza**: dalsze labki wymagają XSS (+ command injection, które już jest)
+
+**Plan dalej (ustalony 24 Nov 2026):**
+1. **Cross-site scripting (XSS)** — NASTĘPNY TEMAT (start zaplanowany na 25 Nov 2026). Powód: domyka client-side, odblokowuje dokończenie LLM, rdzeń BSCP, i to znowu *injection* (przeskok dane→kod, jak `|` w OS cmd i `'` w SQLi — tu kontekst: przeglądarka ofiary + JS).
+2. Dokończyć **Web LLM attacks** (wrócić do 8/30).
+3. Pogłębianie Practitioner pod BSCP: głęboki **SQL injection** (UNION, blind boolean/time-based, error-based), **CSRF**, **SSRF deep** itd.
+
+> **Historia:** zaczęliśmy od Web LLM attacks (labka 01), ale zeszliśmy na fundamenty server-side, bo LLM opiera się na klasycznych podatnościach. File upload zostawiony na 02/9 (reszta tematu do ewentualnego domknięcia później — apprentice-owe labki file upload są już policzone w ukończonej ścieżce server-side).
