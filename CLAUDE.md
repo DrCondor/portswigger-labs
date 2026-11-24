@@ -123,4 +123,12 @@ Aplikacja buduje **string polecenia powłoki** i wkleja do niego user input, po 
 
 Powtarzalny schemat: **znajdź parametr lądujący w poleceniu → wstrzyknij separator shella + sondę (`whoami`/`echo`) → upewnij się, że payload przeżył warstwę transportu.**
 
+### `sql-injection/` — SQL injection (część „Server-side vulnerabilities")
+Aplikacja buduje string zapytania SQL **sklejając input użytkownika jako tekst** (nie bind param). Input może wyskoczyć z kontekstu **danych** (string literał) do kontekstu **kodu** SQL. Wytrychem jest **cudzysłów `'`** (zamyka string otwarty przez apkę) — potem dopisujesz swój SQL, a `--` wycina resztę szablonu (osierocony ciapek + dalsze warunki). Po railsowemu: `where("x='#{p}'")` ❌ vs `where(x: p)` ✅ (bind params = ciapek zostaje danymi). Model mentalny: **szablon z dziurą** — apka pisze ciapki za ciebie, ty wstrzykujesz środek.
+
+- **01 — WHERE clause, hidden data**: filtr `/filter?category=Gifts` → `category='<input>' AND released=1`. Payload `Gifts' OR 1=1--` → cały katalog (w tym unreleased) → Solved. **Pułapka (na żywo): grader patrzy na EFEKT, nie intencję.** `Gifts' AND released=0--` (logicznie najprecyzyjniejszy, pokazał ukryty produkt) **nie zaliczył**; `OR 1=1--` (szeroki strzał, wszystko) zaliczył. Wniosek: do „udowodnij podatność" bierz `OR 1=1--`. Niuans `--`: MySQL wymaga `-- ` ze spacją / `#`; Postgres samo `--`. `%27`=`'`, `%20`=spacja w URL.
+- **Następne:** login bypass (`admin'--`), UNION attacks (wyciąganie z innych tabel), blind (boolean/time-based), error-based, examining the database.
+
+Powtarzalny schemat: **zamknij string (`'`) → dopisz swój SQL → wykomentuj resztę (`--`)**. Test na obecność: wstrzyknij samo `'` i szukaj błędu/anomalii.
+
 > **Uwaga:** przeszliśmy z Web LLM attacks (⏸ pauza po labce 01) na foundacyjną ścieżkę **Server-side vulnerabilities**, bo dalsze labki LLM opierają się na klasycznych podatnościach (command injection, XSS…). Kolejność: fundamenty server-side → client-side → powrót do LLM. File upload w toku (01–02 z 9), temat na razie zostawiony na rzecz OS command injection (następny w pasku PortSwiggera).
