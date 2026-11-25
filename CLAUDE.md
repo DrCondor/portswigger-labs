@@ -26,20 +26,39 @@ appsec-portswigger/
     └── 02-path-delimiters.md
 ```
 
-## Format notatki (trzymamy się tego szablonu)
+## Format notatek (dwa poziomy per temat)
 
-Każdy plik labki zawiera, mniej więcej w tej kolejności:
+Każdy katalog-temat ma **dwa rodzaje plików**, bo obsługujemy dwóch odbiorców:
+- **przyszły Ja** — wraca po recall (payload, przebieg, gdzie się wyłożyłem),
+- **ktoś z zewnątrz** (ziomek) — czyta jak literaturę „patrz, czego ciekawego się nauczyłem".
 
-1. **Nagłówek z metadanymi** — kategoria, poziom (Apprentice/Practitioner/Expert), data, status (✅ rozwiązany), narzędzia.
-2. **Cel labu** — jedno zdanie, co trzeba osiągnąć.
-3. **Koncept** — o co chodzi w tej klasie podatności (prostym językiem, z analogiami).
-4. **Mechanizm tego labu** — konkretny trik / payload i *dlaczego* działa.
-5. **Kroki / przepływ ataku** — krok po kroku; mile widziany diagram `mermaid` przepływu.
-6. **Pułapki** — na czym realnie można się przejechać (z przykładami z rozwiązywania).
-7. **Pojęcia do zapamiętania** — słowniczek terminów.
-8. **Mindset** — co się przenosi na inne laby / co się powtarza.
+Dlatego **teoria i przebieg laba są rozdzielone na osobne pliki**, a pamiętnik („gdzie poległem") jest w kwarantannie.
 
-Styl: konkret, tabelki do porównań (origin vs cache, lab X vs lab Y), **pogrubienia** na sednie, dużo "dlaczego to działa", a nie tylko "co kliknąć.
+### `README.md` tematu — literatura (concept-first, samodzielna)
+
+To jest plik dla ziomka. GitHub renderuje go jako stronę główną katalogu. **Musi bronić się bez znajomości żadnego laba.** Struktura:
+1. **Hook** — 1 zdanie (blockquote) streszczające klasę podatności.
+2. **O co chodzi (koncept)** — prostym językiem, z analogią.
+3. **Jak to działa (mechanizm)** — dlaczego podatność istnieje, na czym stoi; niezależne od konkretnego laba.
+4. **Ogólny schemat ataku** — powtarzalny wzorzec.
+5. **Jak się przed tym bronić** — fix, po railsowemu gdzie pasuje (`❌ podatne` vs `✅ bezpieczne`).
+6. **Słowniczek** — pojęcia.
+7. **Laby w tym temacie** — lista z linkami `[NN — nazwa](NN-...md)` + jedno zdanie co pokazują.
+8. **Mindset / co się przenosi** — na inne tematy.
+
+### `NN-nazwa.md` — cienki log laba (pod recall)
+
+1. **Slim metadane** — tabelka: Poziom / Status / Data / Narzędzia.
+2. **Link do teorii** — `> 📖 Teoria: [README tematu](README.md). Tu tylko ten lab.`
+3. **Cel** — jedno zdanie.
+4. **Trik tego laba** — konkretny payload + *dlaczego akurat to* (specyfika laba, nie ogólna teoria).
+5. **Przebieg** — kroki + diagram `mermaid`.
+6. **💥 Moje potknięcia** — pamiętnik w kwarantannie (wojenne historie, „na tym poległem").
+7. **Czego ten lab dokłada** — co nowego vs inne laby tematu; linki `[[NN-nazwa]]` do powiązanych.
+
+Styl: konkret, tabelki do porównań, **pogrubienia** na sednie, dużo „dlaczego to działa", a nie „co kliknąć". Teoria w README ma być zrozumiała dla kogoś, kto nigdy nie robił labów; log laba zakłada, że teorię już zna.
+
+> **Migracja (25 Nov 2026):** stare notatki (jeden plik per lab, teoria wmieszana z przebiegiem) przerabiane na ten format. Wzorzec: katalog `sql-injection/`.
 
 ## Dotychczasowe tematy
 

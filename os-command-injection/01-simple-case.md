@@ -1,119 +1,59 @@
 # Lab 01 — OS command injection, simple case
 
-- **Kategoria:** OS command injection (część „Server-side vulnerabilities")
-- **Poziom:** Apprentice
-- **Data:** 2026-11-23
-- **Status:** ✅ rozwiązany
-- **Narzędzia:** Burp Suite (Proxy + Repeater)
-- **Ścieżka:** początek tematu **OS command injection**, po File upload
-
----
-
-## Cel labu
-
-Stock checker buduje polecenie powłoki z `productId` i `storeId` od użytkownika i **oddaje surowy output w odpowiedzi**. Trzeba wykonać `whoami` i zobaczyć nazwę bieżącego usera.
-
----
-
-## Koncept: user input ląduje w stringu polecenia powłoki
-
-OS command injection (= shell injection): aplikacja buduje **string polecenia systemowego** i wkleja do niego input użytkownika, po czym uruchamia go przez powłokę (`/bin/sh -c "..."`). Jeśli input zawiera **metaznaki powłoki**, przestaje być „argumentem", a staje się **nowym poleceniem**. Skutek: wykonanie dowolnego kodu na serwerze (pełna kompromitacja, pivot w sieć).
-
-### Po railsowemu
-
-Dokładnie to, przed czym ostrzega Rails przy interpolacji do shella:
-
-```ruby
-system("stockreport.pl #{product_id} #{store_id}")   # ← podatne
-`ping #{host}`                                         # ← to samo
-# bezpiecznie: system("stockreport.pl", product_id, store_id) — bez powłoki, argv
-```
-
-Gdy polecenie idzie **przez powłokę**, shell interpretuje: `;`  `&`  `|`  `` ` ``  `$(...)`  `\n`.
-
-### Metaznaki-separatory
-
-| Znak | Działanie |
+| | |
 |---|---|
-| `;` | wykonaj kolejne polecenie (Linux) |
-| `&` | wykonaj w tle / rozdziel polecenia |
-| `|` | pipe: stdout lewego → stdin prawego |
-| `` `cmd` `` / `$(cmd)` | podstawienie wyniku polecenia |
-| `\n` | nowa linia = nowe polecenie |
+| **Poziom** | Apprentice |
+| **Status** | ✅ rozwiązany |
+| **Data** | 2026-11-23 |
+| **Narzędzia** | Burp (Proxy + Repeater) |
 
-> **Execute, nie read** (jak path traversal) — najgroźniejszy prymityw server-side.
+> 📖 **Teoria tej klasy podatności: [README tematu](README.md).** Tu tylko ten konkretny lab.
 
 ---
 
-## Mechanizm tego labu
+## Cel
 
-Żądanie: `POST /product/stock`, ciało `application/x-www-form-urlencoded`:
-```
-productId=1&storeId=1
-```
-Na serwerze ~ `stockreport.pl <productId> <storeId>`, output wraca w odpowiedzi (`Content-Type: text/plain`). Zero obrony → wstrzykujemy do `storeId`.
+Stock checker buduje polecenie powłoki z `productId` i `storeId` i oddaje **surowy output** w odpowiedzi. Wykonać `whoami` i zobaczyć nazwę usera.
 
-**Payload (w wartości `storeId`):**
+---
+
+## Trik tego labu
+
+Żądanie `POST /product/stock`, ciało `application/x-www-form-urlencoded`: `productId=1&storeId=1`. Na serwerze ~ `stockreport.pl <pid> <sid>`, zero obrony. Wstrzykujesz pipe w `storeId`:
+
 ```
 productId=1&storeId=1|whoami
 ```
+
 Polecenie: `stockreport.pl 1 1 | whoami`. Pipe kieruje wyjście `stockreport.pl` na wejście `whoami`; `whoami` olewa stdin i wypisuje usera → **`peter-BPkJmH`** w odpowiedzi (`Content-Length: 13`, zamiast liczby stanu magazynowego).
 
 ---
 
-## ⭐ Pułapka, na której się potknąłem: separator shella vs składnia transportu
-
-Pierwsza próba (wg przykładu z teorii) **nie zadziałała**:
-```
-productId=1 & whoami &storeId=1        # odpowiedź: 62 (normalny stan), injection pominięty
-```
-
-Dlaczego: `&` ma **dwa znaczenia**, a parser formularza czyta ciało **pierwszy**, zanim cokolwiek trafi do shella:
-
-| `&` dla… | znaczenie |
-|---|---|
-| parsera `x-www-form-urlencoded` | separator **parametrów** |
-| powłoki | separator **poleceń** |
-
-Serwer rozbił string na trzy pola formularza (widać w Burp **Inspector → Request body parameters**: `productId`, osobny `whoami`, `storeId`). `whoami` stał się ignorowanym parametrem, do shella nigdy nie poszedł.
-
-**Zasada:** payload musi najpierw przetrwać **warstwę transportu** (tu: form-urlencoding), a dopiero potem interpretuje go shell. Dwa wyjścia:
-1. **Użyj `|`** — nie jest metaznakiem formularza, przechodzi w całości jako wartość parametru. (Wybrane — najczystsze, zero kodowania.)
-2. **Zostań przy `&`, ale URL-zakoduj** separatory shella (zaznacz w Repeaterze → **Ctrl+U** → `%26`), żeby parser formularza ich nie zjadł i zostały w wartości parametru.
-
----
-
-## Kroki / przepływ ataku
+## Przebieg
 
 ```mermaid
 flowchart TD
-    A[Strona produktu → wybierz sklep → Check stock] --> B[Złap POST /product/stock w Burpie]
+    A[Produkt → wybierz sklep → Check stock] --> B[Złap POST /product/stock]
     B --> C[Send to Repeater]
-    C --> D[storeId = 1 pipe whoami]
+    C --> D["storeId = 1|whoami"]
     D --> E[Send]
-    E --> F[Odpowiedź text/plain = output whoami: peter-BPkJmH]
-    F --> G[Solved]
+    E --> F["Odpowiedź text/plain = peter-BPkJmH → Solved"]
 ```
 
-1. Wejdź na produkt, wybierz sklep (np. London), **Check stock** — złap żądanie.
+1. Na produkcie wybierz sklep, **Check stock** — złap żądanie.
 2. **Send to Repeater**.
-3. Zmień ciało na `productId=1&storeId=1|whoami` (pipe wewnątrz wartości `storeId`).
-4. **Send** → body = `peter-BPkJmH`. Lab solved (sam fakt wykonania whoami rozwiązuje labkę).
+3. Ciało: `productId=1&storeId=1|whoami`.
+4. **Send** → body = `peter-BPkJmH`. **Solved**.
 
 ---
 
-## Pojęcia do zapamiętania
+## 💥 Moje potknięcia
 
-- **OS command injection / shell injection** — user input trafia do stringu polecenia uruchamianego przez powłokę; metaznaki → wykonanie dowolnych poleceń.
-- **Shell metacharacters** — `; & | \n $() `` ``; separatory i podstawienia interpretowane przez powłokę.
-- **In-band / returned injection** — output komendy wraca wprost w odpowiedzi HTTP (tu tak). Przeciwieństwo: blind (brak outputu — trzeba exfiltrować inaczej).
-- **Warstwa transportu vs shell** — payload przechodzi przez parser protokołu (form-urlencoded, JSON, URL) ZANIM dotrze do powłoki; kolizja znaczeń znaku (`&`) psuje atak.
-- **Argv vs shell** — przekazanie argumentów jako tablicy (`system("cmd", a, b)`) omija powłokę i jest odporne na injection; interpolacja do jednego stringa — nie.
+- **`& whoami &` NIE zadziałał** — wziąłem payload wprost z teorii PortSwiggera, ale `&` to też separator parametrów `x-www-form-urlencoded`. Parser formularza zjadł payload: w Burp Inspector `whoami` pokazał się jako **osobny parametr**, odpowiedź wróciła normalna (`62`, stan magazynowy). Dopiero `|` (nie koliduje z form-encoding) zadziałał — albo trzeba było URL-zakodować `&`→`%26` (Ctrl+U).
+- **Lekcja:** payload musi przeżyć **warstwę transportu** (parser protokołu) ZANIM dotrze do shella. To przeniesie się na JSON, URL, nagłówki.
 
 ---
 
-## Mindset
+## Czego ten lab dokłada
 
-Sygnał „to może być command injection": aplikacja robi coś, co pachnie **wywołaniem narzędzia systemowego** (ping, konwersja pliku, raport, legacy skrypt) z twoim inputem w argumentach. Test: wstrzyknij separator + komendę-sondę. `whoami` albo `echo <losowy string>` (echo potwierdza wykonanie, bo twój string wraca w outpucie).
-
-Rdzeń, który się powtórzy w kolejnych labkach tego tematu: **znajdź parametr lądujący w poleceniu → wstrzyknij separator shella → upewnij się, że payload przeżył warstwę transportu**. Dalej temat dokłada trudności: brak outputu (**blind** — detekcja po czasie `; sleep 10`, przez wyjście out-of-band / DNS, albo przekierowanie outputu do pliku w web rootcie), oraz filtrowanie znaków (obejścia). Szersza zasada: nigdy nie buduj polecenia powłoki przez konkatenację danych od użytkownika.
+Wprowadza rdzeń OS command injection (separator + sonda, output in-band) i **najważniejszą praktyczną pułapkę tematu: separator shella vs warstwa transportu**. Twój railsowy instynkt (`system("cmd #{x}")` vs `system("cmd", x)`) to dokładnie oś tej podatności. Dalej: blind (sleep, out-of-band) i obejścia filtrów.
